@@ -1,0 +1,57 @@
+services:
+  nginx:
+    image: nginx
+    ports:
+      - 8080:80
+    depends_on:
+      - server01_statefull
+      - server02_statefull
+      - server01_stateless
+      - server02_stateless
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - lfsoftwares
+  
+  redis:
+    image: redis:latest
+    networks:
+      - lfsoftwares
+
+  server01_statefull:
+    image: lfsoftwares/server_statefull:v1
+    build: 
+      context: ./statefull
+      dockerfile: Dockerfile
+    networks:
+      - lfsoftwares      
+
+  server02_statefull:
+    image: lfsoftwares/server_statefull:v1
+    depends_on:
+      - server01_statefull
+    networks:
+      - lfsoftwares
+
+  server01_stateless:
+    image: lfsoftwares/server_stateless:v1
+    build: 
+      context: ./stateless
+      dockerfile: Dockerfile
+    environment:
+      REDIS_HOST: redis
+    networks:
+      - lfsoftwares      
+
+  server02_stateless:
+    image: lfsoftwares/server_stateless:v1
+    depends_on:
+      - server01_stateless
+    environment:
+      REDIS_HOST: redis
+    networks:
+      - lfsoftwares
+
+networks:
+  lfsoftwares:
+    driver: bridge
